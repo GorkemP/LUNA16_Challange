@@ -1,6 +1,7 @@
 import SimpleITK as sitk
 import numpy as np
 import csv
+import tensorflow as tf
 
 def load_itk_image(filename):
     itkimage = sitk.ReadImage(filename)
@@ -43,4 +44,16 @@ def mixArrays(firstArray,secondArray):
         if i%2 == 0:
             resultList.append(firstArray)
 
+def weight_variable(shape):
+  initial = tf.truncated_normal(shape, stddev=0.1)
+  return tf.Variable(initial)
 
+def bias_variable(shape):
+  initial = tf.constant(0.1, shape=shape)
+  return tf.Variable(initial)
+
+def makeOutputArray(output):
+    if (output == 0):
+        return np.array([1,0])
+    else:
+        return np.array([0, 1])

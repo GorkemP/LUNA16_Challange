@@ -9,6 +9,8 @@ candidates = r'C:\Users\polat\Desktop\TEZ\LUNA\CSVFILES\candidates_V2.csv'
 
 # Constants
 NUM_SUBSET = 10
+voxelWidth = 42
+ZWidth = 2
 
 candidatesList = Provider.readCSV(candidates)
 
@@ -28,29 +30,27 @@ B_conv2 = Provider.bias_variable([64])
 h_conv2 = tf.nn.relu(tf.nn.conv3d(layer1, W_conv2, [1, 1, 1, 1, 1], padding='SAME') + B_conv2)
 layer2 = tf.nn.max_pool3d(h_conv2, ksize=[1, 2, 2, 2, 1], strides=[1, 2, 2, 2, 1], padding='SAME')
 
-FullyConnected1 = tf.reshape(layer2, [-1, np.shape(layer2)[0] * np.shape(layer2)[1] * np.shape(layer2)[2]])
+# FullyConnected1 = tf.reshape(layer2, [-1, np.shape(layer2)[0] * np.shape(layer2)[1] * np.shape(layer2)[2]])
+FullyConnected1 = tf.reshape(layer2, [-1, 7 * 7 * 3])
 
+# W_FullyConnected = Provider.weight_variable(
+#     [np.shape(layer2)[0] * np.shape(layer2)[1] * np.shape(layer2)[2], 1024])
 W_FullyConnected = Provider.weight_variable(
-    [np.shape(layer2)[0] * np.shape(layer2)[1] * np.shape(layer2)[2], 1024])
+    [7 * 7 * 3, 1024])
 B_FullyConnected1 = Provider.bias_variable([1024])
 
-hiddenL = tf.nn.relu(tf.matmul(FullyConnected1,W_FullyConnected)+B_FullyConnected1)
+hiddenL = tf.nn.relu(tf.matmul(FullyConnected1, W_FullyConnected) + B_FullyConnected1)
 
-W_FullyConnected2 = Provider.weight_variable([1024, 1])
-B_FullyConnected2 = tf.constant(0.1)
+W_FullyConnected2 = Provider.weight_variable([1024, 2])
+B_FullyConnected2 = Provider.bias_variable([2])
 
-prediction = tf.nn.softmax(tf.matmul(hiddenL, W_FullyConnected2)+B_FullyConnected2)
+prediction = tf.nn.softmax(tf.matmul(hiddenL, W_FullyConnected2) + B_FullyConnected2)
 
 cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(prediction, output))
 train_step = tf.train.AdamOptimizer(0.0001).minimize(cross_entropy)
-
 tf.summary.scalar("Cross Entropy", cross_entropy)
 
-predictedOutput = prediction
-predictedOutput[prediction>0.5]=1
-predictedOutput[prediction<=0.5]=0
-
-correct_prediction = tf.equal(tf.argmax(predictedOutput, 1), tf.argmax(output, 1))
+correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(output, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.summary.scalar("Accuracy", accuracy)
 
@@ -81,7 +81,6 @@ for outerSet in range(NUM_SUBSET):
         if (cand[4] == '1') and (not (cand[0] in subsetList)):
             truePositiveList.append(cand)
 
-
     candIndex = 0
     while candIndex <= len(candidatesList):
         # Create False Positive List
@@ -101,28 +100,27 @@ for outerSet in range(NUM_SUBSET):
         mixedArray = Provider.mixArrays(truePositiveList, falsePositiveList)
 
         for step in range(len(mixedArray)):
-            fileName = mixedArray[step,0]+'.mhd'
+            fileName = mixedArray[step, 0] + '.mhd'
 
             for i in range(NUM_SUBSET):
-                if (outerSet == i) :
+                if (outerSet == i):
                     continue
-                folder = subsetDirBase+ str(i)
+                folder = subsetDirBase + str(i)
                 fileList = listdir(folder)
                 if fileName in fileList:
-                    filePath = folder+'\\'+fileName
+                    filePath = folder + '\\' + fileName
                     volumeImage, numpyOrigin, numpySpacing = Provider.load_itk_image(filePath)
 
-                    voxelWorldCoor = np.asarray([float(mixedArray[step,3]), float(mixedArray[step,2]), float(mixedArray[step,1])])
+                    voxelWorldCoor = np.asarray(
+                        [float(mixedArray[step, 3]), float(mixedArray[step, 2]), float(mixedArray[step, 1])])
                     voxelPixelCoord = Provider.worldToVoxelCoord(voxelWorldCoor, numpyOrigin, numpySpacing)
-                    voxelWidth = 42
-                    ZWidth = 12
                     patch = volumeImage[voxelPixelCoord[0] - ZWidth / 2:voxelPixelCoord[0] + ZWidth / 2,
                             voxelPixelCoord[1] - voxelWidth / 2:voxelPixelCoord[1] + voxelWidth / 2,
                             voxelPixelCoord[2] - voxelWidth / 2:voxelPixelCoord[2] + voxelWidth / 2]
 
                     patch = Provider.normalizePlanes(patch)
-
-                    sess.run(train_step, feed_dict={inputVolume : patch, output:mixedArray[step,4]})
-                    if ((step%20)==0):
-                        summary = sess.run(merged, feed_dict={inputVolume : patch, output:mixedArray[step,4]})
+                    result = Provider.makeOutputArray(mixedArray[step, 4])
+                    sess.run(train_step, feed_dict={inputVolume: patch, output: mixedArray[step, 4]})
+                    if ((step % 20) == 0):
+                        summary = sess.run(merged, feed_dict={inputVolume: patch, output: result })
                         writer.add_summary(summary)
