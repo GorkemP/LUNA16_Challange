@@ -1,7 +1,11 @@
-# LUNA16_Challange
-https://luna16.grand-challenge.org/ False Positive Reduction track codes
+# LUNA16 Challange
+This challange is about lung nodule detection and classification.
 
-This is a simple ConvNet example on LUNA16 Challange Dataset
+https://luna16.grand-challenge.org/ 
+
+Codes here are for the False Positive Reduction track 
+
+These are ConvNet examples on LUNA16 Challange Dataset
 
 Training is implemented with tensorflow and Keras
 
