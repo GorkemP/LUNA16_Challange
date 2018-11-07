@@ -7,4 +7,4 @@ Training is implemented with tensorflow and Keras
 
 <b>For citation please use the following paper</b>
 
-https://ieeexplore.ieee.org/document/8404659
+https://arxiv.org/abs/1811.01424
