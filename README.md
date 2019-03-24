@@ -1,5 +1,5 @@
-# LUNA16 Challange
-This challange is about lung nodule detection and classification.
+# LUNA16 Challenge
+This challenge is about lung nodule detection and classification.
 
 https://luna16.grand-challenge.org/ 
 
