@@ -7,7 +7,7 @@ Codes here are for the False Positive Reduction track
 
 These are ConvNet examples on LUNA16 Challange Dataset
 
-Training is implemented with tensorflow and Keras
+Training is implemented with Tensorflow 1.x and Keras
 
 <b>For citation please use the following paper</b>
 
